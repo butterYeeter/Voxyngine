@@ -1,52 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <glad.h>
 #include <glfw3.h>
-#include <stdio.h>
-#include <stdlib.h>
-// #include <cimgui.h>
 
-
-// char *load_from_file(const char *file_path) {
-//     char *buffer; int size;
-//     FILE *file = fopen(file_path, "r");
-//     fseek(file, 0, SEEK_END);
-//     size = ftell(file);
-//     rewind(file);
-//     buffer = (char*) malloc(size + 1);
-//     buffer[size] = '\0';
-//     fread(buffer, 0, size, file);
-//     fclose(file);
-//     return buffer;
-// }
-
-// unsigned int create_shader_program(const char *vert_path, const char *frag_path)
-// {
-//     char *vert_src, *frag_src;
-//     vert_src = load_from_file(vert_path);
-//     frag_src = load_from_file(frag_path);
-
-//     unsigned int vert_shader, frag_shader;
-//     vert_shader = glCreateShader(GL_VERTEX_SHADER);
-//     glShaderSource(vert_shader, 1, &vert_src, NULL);
-//     glCompileShader(vert_shader);
-
-//     frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
-//     glShaderSource(frag_shader, 1, &frag_src, NULL);
-//     glCompileShader(frag_shader);
-
-//     unsigned int programID;
-//     programID = glCreateProgram();
-//     glAttachShader(programID, vert_shader);
-//     glAttachShader(programID, frag_shader);
-//     glLinkProgram(programID);
-
-//     free(vert_src);
-//     free(frag_src);
-//     glDeleteShader(vert_shader);
-//     glDeleteShader(frag_shader);
-
-//     return programID;
-// }
 
 void CheckShader(GLuint id, GLuint type, GLint *ret, const char *onfail) { 
 	//Check if something is wrong with the shader 
@@ -148,40 +104,40 @@ int main() {
     GLFWwindow *window = glfwCreateWindow(800, 600, "Hello world", NULL, NULL);
     glfwMakeContextCurrent(window);
 
-    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        printf("Failed to load glad!\n");
-        return -1;
-    }
+	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+		printf("Failed to initialize GL functions!\n");
+		exit(-1);
+	}
 
-    glViewport(0,0,800,600);
+	float vertices[] = {
+		-0.5f, -0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+		0.0f, 0.37f, 0.0f
+	};
 
-    float vertices[] = {
-        0.5f, -0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-        0.0f, 0.37f, 0.0f
-    };
+	unsigned int shader_program;
+	shader_program = create_shader_program("resources/vert.glsl", "resources/frag.glsl");
 
-    unsigned int shader_program;
-    shader_program = create_shader_program("resources/vert.glsl", "resources/frag.glsl");
-    glUseProgram(shader_program);
+	unsigned int VAO, VBO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    unsigned int VAO, VBO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-    glGenBuffers(1, &VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+	glUseProgram(shader_program);
 
 
     while(!glfwWindowShouldClose(window)) {
         glClearColor(0.2,0.3,0.3,1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shader_program);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+		glBindVertexArray(VAO);
+		glUseProgram(shader_program);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

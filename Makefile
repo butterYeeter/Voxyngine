@@ -1,6 +1,5 @@
 build/main: main.o
-	rm -r build/*
-	gcc -L./lib -I./include -Wl,-rpath=./ -o $@ main.o -lglad -lglfw
+	gcc -L./lib -Wl,-rpath=/home/raaid/Documents/c/opengl/build -o $@ main.o -lglad -lglfw
 	cp lib/* build/
 	cp -r resources build/
 	rm *.o
