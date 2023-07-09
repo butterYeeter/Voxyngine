@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <glad.h>
 #include <glfw3.h>
-
+#include <stb_image.h>
 
 void CheckShader(GLuint id, GLuint type, GLint *ret, const char *onfail) { 
 	//Check if something is wrong with the shader 
@@ -110,23 +110,33 @@ int main() {
 	}
 
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.0f, 0.37f, 0.0f
+		-0.5f, -0.5f, 0.0f,	1.0f, 0.0f, 0.0f,
+		0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f,
+		-0.5f, 0.5f, 0.0f,	0.0f, 1.0f, 0.0f,
+		0.5, 0.5f, 0.0f,	1.0f, 1.0f, 0.0f
+	};
+
+	unsigned int indices[] = {
+		0, 2, 3, 0, 1, 3
 	};
 
 	unsigned int shader_program;
 	shader_program = create_shader_program("resources/vert.glsl", "resources/frag.glsl");
 
-	unsigned int VAO, VBO;
+	unsigned int VAO, VBO, EBO;
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	glUseProgram(shader_program);
 
@@ -137,7 +147,7 @@ int main() {
 
 		glBindVertexArray(VAO);
 		glUseProgram(shader_program);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
