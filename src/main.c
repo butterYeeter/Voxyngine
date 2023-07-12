@@ -4,6 +4,11 @@
 #include <glfw3.h>
 #include <stb_image.h>
 
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
 void CheckShader(GLuint id, GLuint type, GLint *ret, const char *onfail) { 
 	//Check if something is wrong with the shader 
 	switch(type) { 
@@ -34,10 +39,6 @@ void CheckShader(GLuint id, GLuint type, GLint *ret, const char *onfail) {
 		default: 
 			break; 
 	}; 
-}
-
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-	glViewport(0,0,width,height);
 }
 
 char *load_from_file(const char* path) {
@@ -91,7 +92,10 @@ unsigned int create_shader_program(const char * vert, const char *frag) {
 }
 
 
-
+void set_uniform_float(unsigned int program_id, float value, const char *name) {	// Sets a uniform of type float for the specified shader program
+	int location = glGetUniformLocation(program_id, name);
+	glUniform1f(location, value);
+}
 
 
 int main() {
@@ -103,6 +107,7 @@ int main() {
 
     GLFWwindow *window = glfwCreateWindow(800, 600, "Hello world", NULL, NULL);
     glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		printf("Failed to initialize GL functions!\n");
@@ -110,10 +115,10 @@ int main() {
 	}
 
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,	1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f,
-		-0.5f, 0.5f, 0.0f,	0.0f, 1.0f, 0.0f,
-		0.5, 0.5f, 0.0f,	1.0f, 1.0f, 0.0f
+		-0.5f, -0.5f, 0.0f,	0.0f, 1.0f,
+		0.5f, -0.5f, 0.0f,	1.0f, 1.0f,
+		-0.5f, 0.5f, 0.0f,	0.0f, 0.0f,
+		0.5f, 0.5f, 0.0f,	1.0f, 0.0f
 	};
 
 	unsigned int indices[] = {
@@ -133,19 +138,50 @@ int main() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
 	glEnableVertexAttribArray(1);
 
 	glUseProgram(shader_program);
 
+	// glEnable(GL_BLEND);
+	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	char *data;
+	FILE *f = fopen("pic.bm", "rb");
+	fseek(f, 0, SEEK_END);
+	int size = ftell(f);
+	rewind(f);
+	data = (char*) malloc(size + 1);
+	data[size] = '\0';
+	fread(data, 1, size, f);
+	fclose(f);
+
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 90, 90, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	free(data);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+
+	// float alpha = 0;
 
     while(!glfwWindowShouldClose(window)) {
         glClearColor(0.2,0.3,0.3,1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
+		// set_uniform_float(shader_program, alpha, "nice");
+		// alpha += 0.5;
+
 		glBindVertexArray(VAO);
+		glBindTexture(GL_TEXTURE_2D, texture);
 		glUseProgram(shader_program);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
