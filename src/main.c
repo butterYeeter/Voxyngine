@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <glad.h>
 #include <glfw3.h>
+
+#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -97,6 +99,60 @@ void set_uniform_float(unsigned int program_id, float value, const char *name) {
 	glUniform1f(location, value);
 }
 
+// unsigned int *create_texture_array(const char **texture_paths, const int num_textures) {
+// 	unsigned int *texture_objects = (int*) malloc(sizeof(int) * num_textures);
+// 	glGenTextures(num_textures, texture_objects);
+
+// 	char **textures = (char**) malloc(num_textures * sizeof(char*));
+// 	int *widths = (int*) malloc(num_textures * sizeof(int));
+// 	int *heights = (int*) malloc(num_textures * sizeof(int));
+// 	int *channels = (int*) malloc(num_textures * sizeof(int));
+
+// 	for(int i = 0; i < num_textures; i++) {
+// 		textures[i] = stbi_load(texture_paths[i], &widths[i], &heights[i], &channels[i], 0);
+// 	}
+
+// 	for(int i = 0; i < num_textures; i++) {
+// 		glBindTexture(GL_TEXTURE_2D, texture_objects[i]);
+// 		int channel;
+// 		// if(channels[i] == 3) channel = GL_RGB; else if(channels[i] == 4) channel = GL_RGBA;
+		
+// 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, widths[i], heights[i], 0, GL_RGBA, GL_UNSIGNED_BYTE, textures[i]);
+// 		glGenerateMipmap(GL_TEXTURE_2D); 
+
+// 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+// 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+// 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+// 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+// 		stbi_image_free(textures[i]);
+// 	}
+
+// 	free(textures);
+// 	free(widths);
+// 	free(heights);
+// 	free(channels);
+
+// 	return texture_objects;
+// }
+
+void create_texture_object(unsigned int *texture_object, const char* image_path) {
+	int width, height, num_channels;
+	char *data = stbi_load(image_path, &width, &height, &num_channels, 0);
+
+	glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, texture_object);
+	glBindTexture(GL_TEXTURE_2D, *texture_object);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
+
 
 int main() {
     glfwInit();
@@ -115,10 +171,10 @@ int main() {
 	}
 
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,	0.0f, 1.0f,
-		0.5f, -0.5f, 0.0f,	1.0f, 1.0f,
-		-0.5f, 0.5f, 0.0f,	0.0f, 0.0f,
-		0.5f, 0.5f, 0.0f,	1.0f, 0.0f
+		-200.0f/800.0f, -200.0f/600.0f, 0.0f,	0.0f, 1.0f,
+		200.0f/800.0f, -200.0f/600.0f, 0.0f,	1.0f, 1.0f,
+		-200.0f/800.0f, 200.0f/600.0f, 0.0f,	0.0f, 0.0f,
+		200.0f/800.0f, 200.0f/600.0f, 0.0f,		1.0f, 0.0f
 	};
 
 	unsigned int indices[] = {
@@ -145,43 +201,40 @@ int main() {
 
 	glUseProgram(shader_program);
 
-	// glEnable(GL_BLEND);
-	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	
 
-	char *data;
-	FILE *f = fopen("pic.bm", "rb");
-	fseek(f, 0, SEEK_END);
-	int size = ftell(f);
-	rewind(f);
-	data = (char*) malloc(size + 1);
-	data[size] = '\0';
-	fread(data, 1, size, f);
-	fclose(f);
-
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 90, 90, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	free(data);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	unsigned int *sprite = (unsigned int*) malloc(4 * sizeof(unsigned int));
+	create_texture_object(sprite  , "resources/Sprite-0001.png");
+	create_texture_object(sprite+1, "resources/Sprite-0002.png");
+	create_texture_object(sprite+2, "resources/Sprite-0003.png");
+	create_texture_object(sprite+3, "resources/Sprite-0004.png");
 
 
 	// float alpha = 0;
+	float last_time = glfwGetTime();
+	int index = 0;
+	glBindTexture(GL_TEXTURE_2D, sprite[index]);
+
 
     while(!glfwWindowShouldClose(window)) {
-        glClearColor(0.2,0.3,0.3,1.0);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
 		// set_uniform_float(shader_program, alpha, "nice");
 		// alpha += 0.5;
 
 		glBindVertexArray(VAO);
-		glBindTexture(GL_TEXTURE_2D, texture);
+
+		float time = glfwGetTime();
+
+		if(time - last_time > 0.11f) {
+			if(index == 3) index = 0; else index++;
+			glBindTexture(GL_TEXTURE_2D, sprite[index]);
+			last_time = time;
+		}
+		
 		glUseProgram(shader_program);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -189,6 +242,8 @@ int main() {
         glfwPollEvents();
     }
 
+
+	free(sprite);
 
     glfwTerminate();
     return 0;

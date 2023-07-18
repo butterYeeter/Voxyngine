@@ -1,11 +1,11 @@
 build/main: main.o
-	gcc -L./lib -Wl,-rpath=/home/raaid/Documents/c/opengl/build -o $@ main.o -lglad -lglfw -lm
-	cp lib/* build/
+	gcc -L./lib -Wl,-rpath=/home/raaid/Documents/c/opengl/lib -o $@ main.o -lglad -l:libglfw.so -lm
+	@# cp lib/* build/
 	cp -r resources build/
 	rm *.o
 
 main.o: src/main.c
-	gcc -L./lib -I./include -Wl,-rpath,./ -c src/main.c -lglad -lglfw -lm
+	gcc -L./lib -I./include -Wl,-rpath,./ -c src/main.c -lglad -l:libglfw.so -lm
 
 help:
 	@echo "List of commands"
