@@ -1,2 +1,3 @@
 #my git ignore
 build/
+build/*
